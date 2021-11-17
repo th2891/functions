@@ -1,0 +1,248 @@
+---
+title: "Visualization"
+subtitle: "Part I"
+output: github_document
+---
+
+```{r setup}
+library(tidyverse)
+library(rvest)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = 0.6, 
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "virids"
+)
+
+scale_colour_discrete = scale_color_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+## Z cores (subtract mean and divide by sd)
+
+```{r}
+x_vec = rnorm(25, mean = 5, sd = 4)
+
+(x_vec - mean(x_vec)) / sd(x_vec)
+
+
+z_scores = function(x) {
+  
+  z = (x - mean(x)) / sd(x)
+ 
+  return(z)
+}
+
+z_scores(x = x_vec)
+
+y_vec = rnorm(40, mean = 12, sd = .3)
+
+z_scores(y_vec)
+```
+
+
+functions working...not working 
+ 
+
+```{r, error = TRUE}
+z_scores(3)
+
+z_scores(c("my", "name", "is", "jeff"))
+
+z_scores(mtcars)
+
+```
+
+ - trying agian with functions
+      - fixing outputs from above ^
+ 
+```{r}
+ z_scores = function(x) {
+   
+   if (!is.numeric(x)) {
+     stop("x needs to be numeric")
+   }
+   
+   if (length(x) < 3) {
+     stop("x should have at least 3 numbers")
+   }
+  
+  z = (x - mean(x)) / sd(x)
+ 
+  return(z)
+}
+```
+ 
+
+## Multiple outputs 
+
+```{r}
+mean_and_sd = function(x) {
+   
+   if (!is.numeric(x)) {
+     stop("x needs to be numeric")
+   }
+   
+   if (length(x) < 3) {
+     stop("x should have at least 3 numbers")
+   }
+  
+  mean_x = mean(x)
+  sd_x = sd(x)
+  
+  output_df = 
+    tibble(
+      mean = mean_x, 
+      sd = sd_x
+    )
+ 
+  return(output_df)
+}
+
+mean_and_sd(x_vec)
+mean_and_sd(y_vec)
+```
+
+
+
+## Different sample sizes, means, and sds
+
+```{r}
+sim_data = 
+  tibble( 
+    x = rnorm(30, mean = 2, sd = 3)
+    )
+
+sim_data %>%
+  summarize(
+    mean = mean(x), 
+    sd = sd(x)
+  )
+
+```
+
+
+function that simulates data, computes mean and sd
+
+```{r}
+sim_mean_sd = function(n, mu, sigma) {
+ 
+  #do checks on inputs
+  
+  sim_data = 
+    tibble( 
+    x = rnorm(n, mean = mu, sd = sigma)
+    )
+
+sim_data %>%
+  summarize(
+    mean = mean(x), 
+    sd = sd(x)
+  )
+  
+}
+
+sim_mean_sd(30, 4, 3)
+```
+
+Revist napolean dynamite
+
+```{r}
+url = "https://www.amazon.com/product-reviews/B00005JNBQ/ref=cm_cr_arp_d_viewopt_rvwer?ie=UTF8&reviewerType=avp_only_reviews&sortBy=recent&pageNumber=1"
+
+dynamite_html = read_html(url)
+
+review_titles = 
+  dynamite_html %>%
+  html_nodes(".a-text-bold span") %>%
+  html_text()
+
+review_stars = 
+  dynamite_html %>%
+  html_nodes("#cm_cr-review_list .review-rating") %>%
+  html_text() 
+ 
+
+review_text = 
+  dynamite_html %>%
+  html_nodes(".review-text-content span") %>%
+  html_text() 
+
+reviews = 
+  tibble(
+    title = review_titles,
+    stars = review_stars,
+    text = review_text
+)
+```
+
+lots of pages of reviews 
+
+
+Write a function that gets reviews based on page url
+
+```{r}
+get_page_reviews = function(page_url) {
+ 
+  page_html = read_html(page_url)
+
+  review_titles = 
+    page_html %>%
+    html_nodes(".a-text-bold span") %>%
+    html_text()
+  
+  review_stars = 
+    page_html %>%
+    html_nodes("#cm_cr-review_list .review-rating") %>%
+    html_text() 
+   
+  
+  review_text = 
+    page_html %>%
+    html_nodes(".review-text-content span") %>%
+    html_text() 
+  
+  reviews = 
+    tibble(
+      title = review_titles,
+      stars = review_stars,
+      text = review_text
+  )
+  
+  return(reviews)
+  
+}
+
+base_url = "https://www.amazon.com/product-reviews/B00005JNBQ/ref=cm_cr_arp_d_viewopt_rvwer?ie=UTF8&reviewerType=avp_only_reviews&sortBy=recent&pageNumber="
+
+urls = str_c(base_url, 1:5)
+
+bind_rows(
+get_page_reviews(urls[1]), 
+get_page_reviews(urls[2]), 
+get_page_reviews(urls[3]), 
+get_page_reviews(urls[4]), 
+get_page_reviews(urls[5])) 
+
+```
+
+```{r}
+f = function(x) {
+  z = x + y
+  z
+}
+
+x = 1
+y = 2
+
+f(x = y)
+```
+
+
